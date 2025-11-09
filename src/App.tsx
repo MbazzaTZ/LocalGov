@@ -25,6 +25,8 @@ import InfoCenter from "./pages/InfoCenter";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
 import UpdatePassword from "./pages/UpdatePassword";
+import ForgotPassword from "./pages/ForgotPassword";
+import ChangePassword from "./pages/ChangePassword";
 /* -------------------------------------------------------------------------- */
 /* ✅ User / Service Pages */
 /* -------------------------------------------------------------------------- */
@@ -134,7 +136,9 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/info" element={<InfoCenter />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/update-password" element={<UpdatePassword />} />
+            <Route path="/update-password" element={<UpdatePassword />} />        
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/change-password" element={<ChangePassword />} />
             {/* 👤 User Routes (Protected) */}
             <Route
               path="/home"
