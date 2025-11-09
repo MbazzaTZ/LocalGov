@@ -59,6 +59,12 @@ const AdminDashboard = () => {
             </BarChart>
           </ResponsiveContainer>
         </div>
+<button
+  onClick={() => (window.location.href = "/admin/analytics")}
+  className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl font-semibold"
+>
+  View Analytics
+</button>
 
         {/* Actions */}
         <div className="mt-10 text-center space-x-4">
