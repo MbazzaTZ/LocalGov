@@ -1,20 +1,41 @@
-
-import React from "react";
-import { useAdminAuth } from "@/contexts/admin-AuthContext";
-import { useCitizenAuth } from "@/contexts/citizen-AuthContext";
-import AdminApp from "@/apps/admin-App";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import CitizenApp from "@/apps/citizen-App";
 import StaffApp from "@/apps/staff-App";
+import AdminApp from "@/apps/admin-App";
+import { Navigate } from "react-router-dom";
 
 const MainApp = () => {
-  const { user: adminUser, role: adminRole } = useAdminAuth();
-  const { user: citizenUser } = useCitizenAuth();
+  const { profile, loading } = useAuth();
+  const [role, setRole] = useState<string | null>(null);
 
-  if (adminUser && adminRole === "Admin") return <AdminApp />;
-  if (citizenUser) return <CitizenApp />;
-  // add logic for staff here
+  useEffect(() => {
+    if (profile?.role) setRole(profile.role);
+  }, [profile]);
 
-  return <CitizenApp />; // default (visitor mode)
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mb-2"></div>
+        <p className="text-gray-600">Loading user session...</p>
+      </div>
+    );
+  }
+
+  if (!role) return <Navigate to="/auth" replace />;
+
+  switch (role) {
+    case "Admin":
+      return <AdminApp />;
+    case "Staff":
+    case "Ward":
+    case "District":
+    case "Village":
+    case "Street":
+      return <StaffApp />;
+    default:
+      return <CitizenApp />;
+  }
 };
 
 export default MainApp;
