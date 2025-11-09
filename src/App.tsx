@@ -42,6 +42,8 @@ import EventPermit from "./pages/services/EventPermit";
 import BurialPermit from "./pages/services/BurialPermit";
 import OpenCase from "./pages/services/OpenCase";
 import PaymentServices from "./pages/PaymentServices";
+import SubmitApplication from "./pages/SubmitApplication"; // ✅ Add import at the top
+
 
 /* -------------------------------------------------------------------------- */
 /* ✅ Admin & Staff Dashboards */
@@ -202,6 +204,15 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+  path="/submit-application"
+  element={
+    <ProtectedRoute>
+      <SubmitApplication />
+    </ProtectedRoute>
+  }
+/>
+
             <Route
               path="/services"
               element={
