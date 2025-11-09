@@ -6,34 +6,30 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import RoleRedirect from "@/components/RoleRedirect";
 import { toast } from "sonner";
 import { Clock } from "lucide-react";
-import useAuditSync from "@/hooks/useAuditSync";
 import { formatDistanceToNow } from "date-fns";
+import { useAuditSync } from "@/hooks/useAuditSync";
 
-/* -------------------------------------------------------------------------- */
-/* ✅ Public Pages */
-/* -------------------------------------------------------------------------- */
+/* Public Pages */
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Verify from "./pages/Verify";
-import Services from "./pages/Services";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import InfoCenter from "./pages/InfoCenter";
 import NotFound from "./pages/NotFound";
+import Verify from "./pages/Verify";
 import ResetPassword from "./pages/ResetPassword";
 import UpdatePassword from "./pages/UpdatePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import ChangePassword from "./pages/ChangePassword";
 
-/* -------------------------------------------------------------------------- */
-/* ✅ User / Service Pages */
-/* -------------------------------------------------------------------------- */
+/* User Pages */
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import MyApplications from "./pages/MyApplications";
+
+/* Service Pages */
 import ResidentCertificate from "./pages/services/ResidentCertificate";
 import IntroductionLetter from "./pages/services/IntroductionLetter";
 import BusinessPermit from "./pages/services/BusinessPermit";
@@ -42,26 +38,18 @@ import EventPermit from "./pages/services/EventPermit";
 import BurialPermit from "./pages/services/BurialPermit";
 import OpenCase from "./pages/services/OpenCase";
 import PaymentServices from "./pages/PaymentServices";
-import SubmitApplication from "./pages/SubmitApplication"; // ✅ Add import at the top
 
-
-/* -------------------------------------------------------------------------- */
-/* ✅ Admin & Staff Dashboards */
-/* -------------------------------------------------------------------------- */
+/* Admin & Staff Dashboards */
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import DistrictDashboard from "./pages/DistrictDashboard";
 import WardDashboard from "./pages/WardDashboard";
 import StaffDashboard from "./pages/StaffDashboard";
 
-/* -------------------------------------------------------------------------- */
-/* ✅ Initialize Query Client */
-/* -------------------------------------------------------------------------- */
+/* Query Client */
 const queryClient = new QueryClient();
 
-/* -------------------------------------------------------------------------- */
-/* ✅ RoleProtectedRoute — Enforces Role-Based Access Control */
-/* -------------------------------------------------------------------------- */
+/* Role Protected Route */
 const RoleProtectedRoute = ({
   allowedRoles,
   children,
@@ -88,31 +76,7 @@ const RoleProtectedRoute = ({
   return children;
 };
 
-/* -------------------------------------------------------------------------- */
-/* ✅ MustChangePasswordProtectedRoute — Forces users to change password */
-/* -------------------------------------------------------------------------- */
-const MustChangePasswordProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const { profile, loading } = useAuth();
-
-  if (loading)
-    return (
-      <div className="text-center mt-20 text-muted-foreground">
-        Loading your account...
-      </div>
-    );
-
-  // 🚨 Force redirect to password change page
-  if (profile?.must_change_password && window.location.pathname !== "/change-password") {
-    toast.info("Please update your password before proceeding.");
-    return <Navigate to="/change-password" replace />;
-  }
-
-  return children;
-};
-
-/* -------------------------------------------------------------------------- */
-/* ✅ Dashboard Wrapper with Live Audit Indicator */
-/* -------------------------------------------------------------------------- */
+/* Dashboard Wrapper with Live Audit Indicator */
 const DashboardWithAudit = ({ children }: { children: JSX.Element }) => {
   const [auditLogs, setAuditLogs] = React.useState<any[]>([]);
   useAuditSync(setAuditLogs);
@@ -142,9 +106,7 @@ const DashboardWithAudit = ({ children }: { children: JSX.Element }) => {
   );
 };
 
-/* -------------------------------------------------------------------------- */
-/* ✅ Main Application Component */
-/* -------------------------------------------------------------------------- */
+/* Main App */
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -153,7 +115,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* 🌍 Public Routes */}
+            {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/about" element={<About />} />
@@ -162,8 +124,6 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
-
-            {/* 🧩 Enforce Password Change */}
             <Route
               path="/change-password"
               element={
@@ -173,24 +133,87 @@ const App = () => (
               }
             />
 
-            {/* 👤 User Routes */}
+            {/* Citizen/User Dashboard */}
             <Route
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <MustChangePasswordProtectedRoute>
-                    <Dashboard />
-                  </MustChangePasswordProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Admin & Staff Login */}
+            <Route path="/admin-login" element={<AdminLogin />} />
+
+            {/* Admin Dashboard (main + alias) */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <RoleProtectedRoute allowedRoles={["Admin"]}>
+                    <DashboardWithAudit>
+                      <AdminDashboard />
+                    </DashboardWithAudit>
+                  </RoleProtectedRoute>
                 </ProtectedRoute>
               }
             />
             <Route
+              path="/admin-dashboard"
+              element={<Navigate to="/admin" replace />}
+            />
+
+            {/* District Dashboard */}
+            <Route
+              path="/dashboard/district"
+              element={
+                <ProtectedRoute>
+                  <RoleProtectedRoute allowedRoles={["District", "Admin"]}>
+                    <DashboardWithAudit>
+                      <DistrictDashboard />
+                    </DashboardWithAudit>
+                  </RoleProtectedRoute>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Ward Dashboard */}
+            <Route
+              path="/dashboard/ward"
+              element={
+                <ProtectedRoute>
+                  <RoleProtectedRoute allowedRoles={["Ward", "Admin"]}>
+                    <DashboardWithAudit>
+                      <WardDashboard />
+                    </DashboardWithAudit>
+                  </RoleProtectedRoute>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Staff Dashboard */}
+            <Route
+              path="/dashboard/staff"
+              element={
+                <ProtectedRoute>
+                  <RoleProtectedRoute
+                    allowedRoles={["Staff", "Village", "Street", "Admin"]}
+                  >
+                    <DashboardWithAudit>
+                      <StaffDashboard />
+                    </DashboardWithAudit>
+                  </RoleProtectedRoute>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Profile & Applications */}
+            <Route
               path="/profile"
               element={
                 <ProtectedRoute>
-                  <MustChangePasswordProtectedRoute>
-                    <Profile />
-                  </MustChangePasswordProtectedRoute>
+                  <Profile />
                 </ProtectedRoute>
               }
             />
@@ -198,100 +221,16 @@ const App = () => (
               path="/applications"
               element={
                 <ProtectedRoute>
-                  <MustChangePasswordProtectedRoute>
-                    <MyApplications />
-                  </MustChangePasswordProtectedRoute>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-  path="/submit-application"
-  element={
-    <ProtectedRoute>
-      <SubmitApplication />
-    </ProtectedRoute>
-  }
-/>
-
-            <Route
-              path="/services"
-              element={
-                <ProtectedRoute>
-                  <MustChangePasswordProtectedRoute>
-                    <Services />
-                  </MustChangePasswordProtectedRoute>
+                  <MyApplications />
                 </ProtectedRoute>
               }
             />
 
-            {/* 🎯 Role-Based Dashboards */}
-            <Route
-              path="/dashboard/district"
-              element={
-                <ProtectedRoute>
-                  <MustChangePasswordProtectedRoute>
-                    <RoleProtectedRoute allowedRoles={["District", "Admin"]}>
-                      <DashboardWithAudit>
-                        <DistrictDashboard />
-                      </DashboardWithAudit>
-                    </RoleProtectedRoute>
-                  </MustChangePasswordProtectedRoute>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard/ward"
-              element={
-                <ProtectedRoute>
-                  <MustChangePasswordProtectedRoute>
-                    <RoleProtectedRoute allowedRoles={["Ward", "Admin"]}>
-                      <DashboardWithAudit>
-                        <WardDashboard />
-                      </DashboardWithAudit>
-                    </RoleProtectedRoute>
-                  </MustChangePasswordProtectedRoute>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard/staff"
-              element={
-                <ProtectedRoute>
-                  <MustChangePasswordProtectedRoute>
-                    <RoleProtectedRoute
-                      allowedRoles={["Staff", "Village", "Street", "Admin"]}
-                    >
-                      <DashboardWithAudit>
-                        <StaffDashboard />
-                      </DashboardWithAudit>
-                    </RoleProtectedRoute>
-                  </MustChangePasswordProtectedRoute>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* 👑 Admin Dashboard & Login */}
-            <Route path="/admin-login" element={<AdminLogin />} />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute>
-                  <MustChangePasswordProtectedRoute>
-                    <RoleProtectedRoute allowedRoles={["Admin"]}>
-                      <DashboardWithAudit>
-                        <AdminDashboard />
-                      </DashboardWithAudit>
-                    </RoleProtectedRoute>
-                  </MustChangePasswordProtectedRoute>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* 🧾 Verified Services */}
+            {/* Services */}
             <Route
               path="/services/resident-certificate"
               element={
-                <ProtectedRoute requireVerification>
+                <ProtectedRoute>
                   <ResidentCertificate />
                 </ProtectedRoute>
               }
@@ -299,13 +238,11 @@ const App = () => (
             <Route
               path="/services/introduction-letter"
               element={
-                <ProtectedRoute requireVerification>
+                <ProtectedRoute>
                   <IntroductionLetter />
                 </ProtectedRoute>
               }
             />
-
-            {/* 💼 General Services */}
             <Route
               path="/services/business-permit"
               element={
@@ -355,7 +292,7 @@ const App = () => (
               }
             />
 
-            {/* 🚫 Catch-All */}
+            {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
