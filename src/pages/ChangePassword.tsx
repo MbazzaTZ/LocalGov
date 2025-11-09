@@ -1,67 +1,76 @@
 import React, { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/utils/supabaseClient";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { toast } from "sonner";
-import { Lock, Check } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
-const ChangePassword: React.FC = () => {
-  const navigate = useNavigate();
+const ChangePassword = () => {
+  const { user, profile, refreshProfile } = useAuth();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChangePassword = async () => {
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (password !== confirm) {
-      toast.error("Passwords do not match!");
+      setMessage("❌ Passwords do not match");
+      return;
+    }
+    setLoading(true);
+
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) {
+      setMessage(`❌ ${error.message}`);
+      setLoading(false);
       return;
     }
 
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
+    // Mark password as changed
+    await supabase
+      .from("profiles")
+      .update({ must_change_password: false })
+      .eq("id", user.id);
 
-      toast.success("Password updated successfully!");
-      navigate("/dashboard");
-    } catch (err: any) {
-      toast.error("Failed to update password.", { description: err.message });
-    } finally {
-      setLoading(false);
-    }
+    setLoading(false);
+    setMessage("✅ Password changed successfully.");
+    await refreshProfile();
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/10 to-secondary/10 flex items-center justify-center px-4">
-      <Card className="p-8 w-full max-w-md shadow-xl backdrop-blur-md bg-white/70">
-        <h1 className="text-2xl font-bold text-center mb-6 text-foreground">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center">
+      <Card className="p-8 max-w-md w-full shadow-lg bg-white/70 backdrop-blur-xl">
+        <h2 className="text-2xl font-bold mb-4 text-center">
           Change Your Password
-        </h1>
-
-        <div className="space-y-4">
+        </h2>
+        <p className="text-sm text-muted-foreground mb-6 text-center">
+          {profile?.fullName} ({profile?.email})
+        </p>
+        <form onSubmit={handleChangePassword} className="space-y-4">
           <Input
             type="password"
-            placeholder="New Password"
+            placeholder="New password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
           <Input
             type="password"
-            placeholder="Confirm New Password"
+            placeholder="Confirm password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
+            required
           />
-          <Button
-            onClick={handleChangePassword}
-            className="w-full flex items-center justify-center gap-2"
-            disabled={loading || !password || !confirm}
-          >
-            {loading ? "Updating..." : <Check className="w-4 h-4" />}{" "}
-            {loading ? "" : "Update Password"}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Changing..." : "Change Password"}
           </Button>
-        </div>
+        </form>
+        {message && (
+          <p className="text-center text-sm mt-4 text-muted-foreground">
+            {message}
+          </p>
+        )}
       </Card>
     </div>
   );
