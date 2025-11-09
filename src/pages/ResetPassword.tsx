@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { supabase } from "@/utils/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -67,3 +67,4 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
+
