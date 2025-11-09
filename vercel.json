@@ -2,6 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "framework": "vite",
+
   "builds": [
     {
       "src": "vite.config.ts",
@@ -9,15 +10,13 @@
       "config": { "distDir": "dist" }
     }
   ],
-  "routes": [
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+
+  /* ✅ SPA fallback for React Router */
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
+
+  /* ✅ Global CORS + cache headers */
   "headers": [
     {
       "source": "/(.*)",
@@ -30,11 +29,14 @@
       ]
     }
   ],
+
+  /* ✅ Env for client-side Vite */
   "env": {
     "VITE_SUPABASE_URL": "https://maqykrdqtipvmowpamgm.supabase.co",
     "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hcXlrcmRxdGlwdm1vd3BhbWdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2ODQ1MjUsImV4cCI6MjA3ODI2MDUyNX0.tIIjiur9kDZJcp7eTU3cokBpxLnIbYAgpdCUivSAfAE",
     "VITE_SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hcXlrcmRxdGlwdm1vd3BhbWdtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjY4NDUyNSwiZXhwIjoyMDc4MjYwNTI1fQ.1UIqKa-2TaWQSIGeZeo6MK4cJBE9LF7cNeo3bFQLWCs"
   },
+
   "outputDirectory": "dist",
   "cleanUrls": true,
   "trailingSlash": false
