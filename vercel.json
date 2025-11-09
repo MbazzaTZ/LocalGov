@@ -5,9 +5,7 @@
     {
       "src": "vite.config.ts",
       "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+      "config": { "distDir": "dist" }
     },
     {
       "src": "api/**/*.ts",
@@ -15,24 +13,17 @@
     }
   ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ],
   "framework": "vite",
-  "env": {
-    "VITE_SUPABASE_URL": "https://ubpopiltillvjncpzdqu.supabase.co",
-    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicG9waWx0aWxsdmpuY3B6ZHF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1OTU4MTQsImV4cCI6MjA3ODE3MTgxNH0.I4PwXBfQnustdhMPPH3X9ZaIZ7mSjEhqYPHr14IPgCk",
-    
   "outputDirectory": "dist",
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "env": {
+    "VITE_SUPABASE_URL": "https://maqykrdqtipvmowpamgm.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hcXlrcmRxdGlwdm1vd3BhbWdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2ODQ1MjUsImV4cCI6MjA3ODI2MDUyNX0.tIIjiur9kDZJcp7eTU3cokBpxLnIbYAgpdCUivSAfAE",
+    "VITE_SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hcXlrcmRxdGlwdm1vd3BhbWdtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjY4NDUyNSwiZXhwIjoyMDc4MjYwNTI1fQ.1UIqKa-2TaWQSIGeZeo6MK4cJBE9LF7cNeo3bFQLWCs"
+  }
 }
