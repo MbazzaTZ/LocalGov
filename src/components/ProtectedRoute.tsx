@@ -1,35 +1,15 @@
-import React from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext"; // ✅ clean import
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-  requireVerification?: boolean;
-}
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { user, loading } = useAuth();
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-  children,
-  requireVerification = false,
-}) => {
-  const { user, isVerified, loading } = useAuth();
+  if (loading) return <div className="text-center p-10">Loading...</div>;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen text-gray-700">
-        Loading...
-      </div>
-    );
-  }
+  // ✅ If no user, redirect to login
+  if (!user) return <Navigate to="/auth" replace />;
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  if (requireVerification && !isVerified) {
-    return <Navigate to="/verify" replace />;
-  }
-
-  return <>{children}</>;
+  return children;
 };
 
 export default ProtectedRoute;
