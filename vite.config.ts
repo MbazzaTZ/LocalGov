@@ -2,41 +2,45 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
-// ✅ Full Vite configuration for your Tanzania Digital Gateway app
+// ✅ Vite Configuration for LocalGov Portal
 export default defineConfig({
-  plugins: [
-    // Enables React Fast Refresh, JSX, and TSX transformations
-    react(),
-  ],
-
-  // ✅ Module resolution aliases
+  plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"), // allows imports like "@/components/Button"
+      "@": path.resolve(__dirname, "src"),
     },
   },
-
-  // ✅ Development server configuration
-  server: {
-    port: 5173, // You can change this if you want
-    open: true, // Automatically open in browser on npm run dev
-    cors: true, // Enable CORS
-  },
-
-  // ✅ Build options for production
   build: {
     outDir: "dist",
-    sourcemap: false,
-    chunkSizeWarningLimit: 1200,
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
   },
-
-  // ✅ Optimize dependencies for better startup time
+  server: {
+    port: 5173,
+    open: true,
+    host: true,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+    },
+  },
+  preview: {
+    port: 8080,
+    host: true,
+  },
+  define: {
+    "process.env": process.env,
+  },
   optimizeDeps: {
     include: [
       "react",
       "react-dom",
       "react-router-dom",
-      "@tanstack/react-query",
+      "@supabase/supabase-js",
+      "date-fns",
       "lucide-react",
       "sonner",
     ],
