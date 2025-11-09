@@ -21,6 +21,14 @@ const AdminApp = () => {
             </AdminProtectedRoute>
           }
         />
+<Route
+  path="/admin/analytics"
+  element={
+    <AdminProtectedRoute>
+      <Analytics />
+    </AdminProtectedRoute>
+  }
+/>
 
         <Route
           path="/admin/users"
