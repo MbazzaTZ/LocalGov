@@ -1,42 +1,90 @@
-// src/contexts/admin-AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { toast } from "sonner";
 
-const AdminAuthContext = createContext(null);
+type AdminProfile = {
+  id?: string;
+  email?: string;
+  full_name?: string;
+  role?: string;
+  is_admin?: boolean;
+};
 
-export const AdminAuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null);
+type AdminAuthContextType = {
+  user: any;
+  profile: AdminProfile | null;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
+};
+
+const AdminAuthContext = createContext<AdminAuthContextType>({
+  user: null,
+  profile: null,
+  loading: true,
+  signIn: async () => {},
+  signOut: async () => {},
+  refreshProfile: async () => {},
+});
+
+export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<AdminProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadSession = async () => {
+    const init = async () => {
       const { data } = await supabase.auth.getSession();
-      const user = data.session?.user ?? null;
-      setUser(user);
-
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-
-        setRole(profile?.role);
-      }
+      setUser(data.session?.user ?? null);
+      setLoading(false);
     };
-    loadSession();
+    init();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => listener.subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    return data;
+  const refreshProfile = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+    if (!error && data) setProfile(data);
   };
 
-  const signOut = async () => await supabase.auth.signOut();
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) {
+      toast.error("Login failed", { description: error.message });
+      throw error;
+    }
+    toast.success("Welcome Admin");
+    window.location.href = "/admin-dashboard";
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    toast.success("Logged out successfully");
+    window.location.href = "/auth";
+  };
 
   return (
-    <AdminAuthContext.Provider value={{ user, role, signIn, signOut }}>
+    <AdminAuthContext.Provider
+      value={{ user, profile, loading, signIn, signOut, refreshProfile }}
+    >
       {children}
     </AdminAuthContext.Provider>
   );
