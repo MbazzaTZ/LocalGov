@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/utils/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 
 const Profile: React.FC = () => {
@@ -317,5 +317,6 @@ const Profile: React.FC = () => {
     </div>
   );
 };
+
 
 export default Profile;
