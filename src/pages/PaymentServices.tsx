@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { supabase } from "@/utils/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -178,5 +178,6 @@ const PaymentServices: React.FC = () => {
     </div>
   );
 };
+
 
 export default PaymentServices;
