@@ -31,6 +31,12 @@ const Analytics = () => {
           </BarChart>
         </ResponsiveContainer>
       </div>
+<button
+  onClick={() => exportToCSV(districtStats, "district_analytics.csv")}
+  className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg mt-6"
+>
+  Export to CSV
+</button>
 
       {/* Staff Performance Overview */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg">
