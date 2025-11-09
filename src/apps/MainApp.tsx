@@ -18,7 +18,7 @@ const MainApp = () => {
         {/* Admin Portal */}
         <Route path="/admin/*" element={<AdminApp />} />
 
-        {/* 404 */}
+        {/* Catch-All */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
