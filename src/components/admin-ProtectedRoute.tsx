@@ -6,7 +6,11 @@ const AdminProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, profile } = useAdminAuth();
 
   if (loading)
-    return <div className="text-center mt-20 text-white">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen text-white">
+        Loading admin session...
+      </div>
+    );
 
   if (!user || !profile?.is_admin) {
     return <Navigate to="/admin-login" replace />;
