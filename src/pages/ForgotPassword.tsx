@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { Mail, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Mail } from "lucide-react";
 
 const ForgotPassword: React.FC = () => {
   const navigate = useNavigate();
@@ -18,11 +18,8 @@ const ForgotPassword: React.FC = () => {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/change-password`,
       });
-
       if (error) throw error;
-      toast.success("Reset email sent!", {
-        description: "Please check your inbox to reset your password.",
-      });
+      toast.success("Password reset email sent!");
       navigate("/auth");
     } catch (err: any) {
       toast.error("Failed to send reset email.", { description: err.message });
@@ -32,16 +29,23 @@ const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/10 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary/10 to-secondary/10 flex items-center justify-center px-4">
       <Card className="p-8 w-full max-w-md shadow-xl backdrop-blur-md bg-white/70">
+        <Button
+          variant="ghost"
+          className="flex items-center gap-1 text-sm mb-6"
+          onClick={() => navigate("/auth")}
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Login
+        </Button>
         <h1 className="text-2xl font-bold text-center mb-6 text-foreground">
-          Forgot Password
+          Reset Your Password
         </h1>
 
         <div className="space-y-4">
           <Input
             type="email"
-            placeholder="Enter your email"
+            placeholder="Enter your registered email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -54,16 +58,6 @@ const ForgotPassword: React.FC = () => {
             {loading ? "Sending..." : "Send Reset Email"}
           </Button>
         </div>
-
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          Remembered your password?{" "}
-          <span
-            className="text-primary font-semibold cursor-pointer"
-            onClick={() => navigate("/auth")}
-          >
-            Back to Login
-          </span>
-        </p>
       </Card>
     </div>
   );
