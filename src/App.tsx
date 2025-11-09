@@ -9,7 +9,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import RoleRedirect from "@/components/RoleRedirect";
 import { toast } from "sonner";
 import { Clock } from "lucide-react";
-import useAuditSync from "@/hooks/useAuditSync"; // ✅ fixed import
+import useAuditSync from "@/hooks/useAuditSync";
 import { formatDistanceToNow } from "date-fns";
 
 /* -------------------------------------------------------------------------- */
@@ -27,13 +27,13 @@ import ResetPassword from "./pages/ResetPassword";
 import UpdatePassword from "./pages/UpdatePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import ChangePassword from "./pages/ChangePassword";
+
 /* -------------------------------------------------------------------------- */
 /* ✅ User / Service Pages */
 /* -------------------------------------------------------------------------- */
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import MyApplications from "./pages/MyApplications";
-
 import ResidentCertificate from "./pages/services/ResidentCertificate";
 import IntroductionLetter from "./pages/services/IntroductionLetter";
 import BusinessPermit from "./pages/services/BusinessPermit";
@@ -81,6 +81,28 @@ const RoleProtectedRoute = ({
       description: "You are not authorized to access this page.",
     });
     return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
+/* -------------------------------------------------------------------------- */
+/* ✅ MustChangePasswordProtectedRoute — Forces users to change password */
+/* -------------------------------------------------------------------------- */
+const MustChangePasswordProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { profile, loading } = useAuth();
+
+  if (loading)
+    return (
+      <div className="text-center mt-20 text-muted-foreground">
+        Loading your account...
+      </div>
+    );
+
+  // 🚨 Force redirect to password change page
+  if (profile?.must_change_password && window.location.pathname !== "/change-password") {
+    toast.info("Please update your password before proceeding.");
+    return <Navigate to="/change-password" replace />;
   }
 
   return children;
@@ -136,15 +158,27 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/info" element={<InfoCenter />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/update-password" element={<UpdatePassword />} />        
+            <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
-            {/* 👤 User Routes (Protected) */}
+
+            {/* 🧩 Enforce Password Change */}
             <Route
-              path="/home"
+              path="/change-password"
               element={
                 <ProtectedRoute>
-                  <Index />
+                  <ChangePassword />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 👤 User Routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <MustChangePasswordProtectedRoute>
+                    <Dashboard />
+                  </MustChangePasswordProtectedRoute>
                 </ProtectedRoute>
               }
             />
@@ -152,7 +186,9 @@ const App = () => (
               path="/profile"
               element={
                 <ProtectedRoute>
-                  <Profile />
+                  <MustChangePasswordProtectedRoute>
+                    <Profile />
+                  </MustChangePasswordProtectedRoute>
                 </ProtectedRoute>
               }
             />
@@ -160,15 +196,9 @@ const App = () => (
               path="/applications"
               element={
                 <ProtectedRoute>
-                  <MyApplications />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/verify"
-              element={
-                <ProtectedRoute>
-                  <Verify />
+                  <MustChangePasswordProtectedRoute>
+                    <MyApplications />
+                  </MustChangePasswordProtectedRoute>
                 </ProtectedRoute>
               }
             />
@@ -176,15 +206,9 @@ const App = () => (
               path="/services"
               element={
                 <ProtectedRoute>
-                  <Services />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
+                  <MustChangePasswordProtectedRoute>
+                    <Services />
+                  </MustChangePasswordProtectedRoute>
                 </ProtectedRoute>
               }
             />
@@ -194,11 +218,13 @@ const App = () => (
               path="/dashboard/district"
               element={
                 <ProtectedRoute>
-                  <RoleProtectedRoute allowedRoles={["District", "Admin"]}>
-                    <DashboardWithAudit>
-                      <DistrictDashboard />
-                    </DashboardWithAudit>
-                  </RoleProtectedRoute>
+                  <MustChangePasswordProtectedRoute>
+                    <RoleProtectedRoute allowedRoles={["District", "Admin"]}>
+                      <DashboardWithAudit>
+                        <DistrictDashboard />
+                      </DashboardWithAudit>
+                    </RoleProtectedRoute>
+                  </MustChangePasswordProtectedRoute>
                 </ProtectedRoute>
               }
             />
@@ -206,11 +232,13 @@ const App = () => (
               path="/dashboard/ward"
               element={
                 <ProtectedRoute>
-                  <RoleProtectedRoute allowedRoles={["Ward", "Admin"]}>
-                    <DashboardWithAudit>
-                      <WardDashboard />
-                    </DashboardWithAudit>
-                  </RoleProtectedRoute>
+                  <MustChangePasswordProtectedRoute>
+                    <RoleProtectedRoute allowedRoles={["Ward", "Admin"]}>
+                      <DashboardWithAudit>
+                        <WardDashboard />
+                      </DashboardWithAudit>
+                    </RoleProtectedRoute>
+                  </MustChangePasswordProtectedRoute>
                 </ProtectedRoute>
               }
             />
@@ -218,13 +246,15 @@ const App = () => (
               path="/dashboard/staff"
               element={
                 <ProtectedRoute>
-                  <RoleProtectedRoute
-                    allowedRoles={["Staff", "Village", "Street", "Admin"]}
-                  >
-                    <DashboardWithAudit>
-                      <StaffDashboard />
-                    </DashboardWithAudit>
-                  </RoleProtectedRoute>
+                  <MustChangePasswordProtectedRoute>
+                    <RoleProtectedRoute
+                      allowedRoles={["Staff", "Village", "Street", "Admin"]}
+                    >
+                      <DashboardWithAudit>
+                        <StaffDashboard />
+                      </DashboardWithAudit>
+                    </RoleProtectedRoute>
+                  </MustChangePasswordProtectedRoute>
                 </ProtectedRoute>
               }
             />
@@ -235,23 +265,13 @@ const App = () => (
               path="/admin"
               element={
                 <ProtectedRoute>
-                  <RoleProtectedRoute allowedRoles={["Admin"]}>
-                    <DashboardWithAudit>
-                      <AdminDashboard />
-                    </DashboardWithAudit>
-                  </RoleProtectedRoute>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin-dashboard"
-              element={
-                <ProtectedRoute>
-                  <RoleProtectedRoute allowedRoles={["Admin"]}>
-                    <DashboardWithAudit>
-                      <AdminDashboard />
-                    </DashboardWithAudit>
-                  </RoleProtectedRoute>
+                  <MustChangePasswordProtectedRoute>
+                    <RoleProtectedRoute allowedRoles={["Admin"]}>
+                      <DashboardWithAudit>
+                        <AdminDashboard />
+                      </DashboardWithAudit>
+                    </RoleProtectedRoute>
+                  </MustChangePasswordProtectedRoute>
                 </ProtectedRoute>
               }
             />
