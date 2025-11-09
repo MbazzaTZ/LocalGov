@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Navigate } from "react-router-dom";
 import CitizenApp from "@/apps/citizen-App";
 import StaffApp from "@/apps/staff-App";
 import AdminApp from "@/apps/admin-App";
-import { Navigate } from "react-router-dom";
 
+/**
+ * 🧭 MainApp
+ * Auto-selects which role-based subapp to render.
+ * Keeps consistent glass design and fade transitions.
+ */
 const MainApp = () => {
   const { profile, loading } = useAuth();
   const [role, setRole] = useState<string | null>(null);
@@ -15,27 +20,28 @@ const MainApp = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mb-2"></div>
-        <p className="text-gray-600">Loading user session...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 text-gray-600 transition-all duration-300">
+        <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mb-3"></div>
+        <p className="text-sm font-medium text-foreground/70">
+          Checking your account access...
+        </p>
       </div>
     );
   }
 
   if (!role) return <Navigate to="/auth" replace />;
 
-  switch (role) {
-    case "Admin":
-      return <AdminApp />;
-    case "Staff":
-    case "Ward":
-    case "District":
-    case "Village":
-    case "Street":
-      return <StaffApp />;
-    default:
-      return <CitizenApp />;
-  }
+  return (
+    <div className="animate-fadeIn min-h-screen">
+      {role === "Admin" ? (
+        <AdminApp />
+      ) : ["Staff", "Ward", "District", "Village"].includes(role) ? (
+        <StaffApp />
+      ) : (
+        <CitizenApp />
+      )}
+    </div>
+  );
 };
 
 export default MainApp;
