@@ -30,7 +30,7 @@ const AdminApp = () => {
             </AdminProtectedRoute>
           }
         />
-
+        
         <Route
           path="/admin/settings"
           element={
