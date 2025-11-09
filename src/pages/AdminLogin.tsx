@@ -1,11 +1,8 @@
 import React, { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ShieldCheck, Lock, Loader2, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClient"; // ✅ fixed import path
+import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
+import { Loader2, Lock, User } from "lucide-react";
 
 const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -13,121 +10,148 @@ const AdminLogin: React.FC = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Helper to determine the correct dashboard path based on role
-  const getDashboardPath = (profile: any) => {
-    if (profile.is_admin) return "/admin-dashboard";
-    if (profile.is_district_staff) return "/dashboard/district";
-    if (profile.is_ward_staff) return "/dashboard/ward";
-    if (profile.is_village_staff) return "/dashboard/staff";
-    return null; // No staff/admin role found
-  };
-
-  // ✅ FIX: Use Supabase login and check for staff roles in the profiles table
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // 1. Authenticate with Supabase
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      // Step 1: Attempt to sign in
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (authError) throw new Error(authError.message);
+      if (error) {
+        console.error("❌ Login Error:", error.message);
+        toast.error("Login failed", { description: error.message });
+        return;
+      }
 
-      const userId = authData.user?.id;
-      if (!userId) throw new Error("Authentication succeeded but user ID is missing.");
+      const user = data.user;
+      if (!user) {
+        toast.error("Login failed", { description: "No user found." });
+        return;
+      }
 
-      // 2. Check user's role in the 'profiles' table
-      const { data: profileData, error: profileError } = await supabase
+      // Step 2: Fetch user profile from Supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select(`
-          is_admin, 
-          is_district_staff, 
-          is_ward_staff, 
-          is_village_staff
-        `)
-        .eq("id", userId)
+        .select(
+          "id, email, full_name, role, district, ward, is_admin, is_district_staff, is_ward_staff, is_village_staff"
+        )
+        .eq("id", user.id)
         .single();
 
-      if (profileError) throw new Error(profileError.message);
-      if (!profileData) throw new Error("User profile not found after login.");
-
-      const dashboardPath = getDashboardPath(profileData);
-
-      if (dashboardPath) {
-        toast.success(`✅ Login successful! Redirecting to ${dashboardPath.replace("/", "").replace("-", " ")}.`);
-        navigate(dashboardPath, { replace: true });
-      } else {
-        // User is a citizen trying to log into the admin portal
-        await supabase.auth.signOut(); // Log them out immediately
-        toast.error("❌ Access Denied: You do not have staff privileges.");
+      if (profileError) {
+        console.error("Admin Login Error:", profileError.message);
+        toast.error("Profile load failed", { description: profileError.message });
+        return;
       }
-    } catch (error: any) {
-      console.error("Admin Login Error:", error.message);
-      toast.error(`❌ Login failed: Invalid credentials or insufficient privileges.`);
+
+      console.log("✅ Login successful:", profile);
+
+      // Step 3: Handle role-based redirection
+      if (profile.is_admin || profile.role === "Admin") {
+        toast.success("✅ Login successful! Redirecting to admin dashboard.");
+        navigate("/admin");
+      } else if (profile.is_district_staff || profile.role === "District") {
+        toast.success("✅ District login successful!");
+        navigate("/dashboard/district");
+      } else if (profile.is_ward_staff || profile.role === "Ward") {
+        toast.success("✅ Ward login successful!");
+        navigate("/dashboard/ward");
+      } else if (profile.is_village_staff || profile.role === "Staff") {
+        toast.success("✅ Staff login successful!");
+        navigate("/dashboard/staff");
+      } else {
+        toast.warning("Access Denied", {
+          description: "This account is not authorized for admin access.",
+        });
+        navigate("/auth");
+      }
+    } catch (err: any) {
+      console.error("⚠️ Unexpected Error:", err.message);
+      toast.error("Something went wrong", { description: err.message });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-secondary/5">
-      <Card className="p-8 shadow-lg border-border/50 w-full max-w-md">
-        <Button
-          variant="link"
-          className="text-muted-foreground mb-4 flex items-center gap-1 p-0"
-          onClick={() => navigate("/")}
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to Home
-        </Button>
-
-        <div className="flex flex-col items-center mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
-            <ShieldCheck className="w-8 h-8 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold text-foreground mt-4">
-            Staff / Admin Login
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            Restricted access for authorized staff only.
-          </p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/20 p-4">
+      <div className="bg-white/90 shadow-lg rounded-2xl w-full max-w-md p-8 backdrop-blur-md">
+        <div className="text-center mb-6">
+          <img
+            src="https://images.seeklogo.com/logo-png/31/1/coat-of-arms-of-tanzania-logo-png_seeklogo-311608.png"
+            alt="Logo"
+            className="mx-auto w-16 h-16 mb-3"
+          />
+          <h1 className="text-2xl font-semibold text-gray-800">
+            Local Government Portal
+          </h1>
+          <p className="text-gray-500">Admin & Staff Login</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
-          <Input
-            type="email"
-            placeholder="Staff Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Email
+            </label>
+            <div className="flex items-center border rounded-lg px-3 py-2 bg-white/50">
+              <User className="w-4 h-4 text-gray-500 mr-2" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-transparent outline-none text-gray-800"
+                placeholder="admin@localgov.co.tz"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <div className="flex items-center border rounded-lg px-3 py-2 bg-white/50">
+              <Lock className="w-4 h-4 text-gray-500 mr-2" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-transparent outline-none text-gray-800"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
             disabled={loading}
-          />
-          <Input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
-          />
-          <Button type="submit" className="w-full bg-primary text-white" disabled={loading}>
+            className="w-full flex justify-center items-center bg-primary text-white py-2 rounded-lg font-medium hover:bg-primary/90 transition-all duration-200"
+          >
             {loading ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Logging in...
+              </>
             ) : (
-              <Lock className="w-4 h-4 mr-2" />
+              "Sign In"
             )}
-            {loading ? "Logging in..." : "Login"}
-          </Button>
+          </button>
         </form>
 
-        <Button
-          variant="link"
-          className="mt-4 text-sm text-muted-foreground hover:text-primary"
-          onClick={() => navigate("/auth")}
-        >
-          Are you a Citizen? Login here
-        </Button>
-      </Card>
+        <div className="text-center mt-6">
+          <button
+            onClick={() => navigate("/")}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            ← Back to Home
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
