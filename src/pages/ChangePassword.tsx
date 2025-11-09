@@ -22,7 +22,6 @@ const ChangePassword: React.FC = () => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.updateUser({ password });
-
       if (error) throw error;
 
       toast.success("Password updated successfully!");
@@ -54,7 +53,6 @@ const ChangePassword: React.FC = () => {
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
           />
-
           <Button
             onClick={handleChangePassword}
             className="w-full flex items-center justify-center gap-2"
@@ -64,10 +62,6 @@ const ChangePassword: React.FC = () => {
             {loading ? "" : "Update Password"}
           </Button>
         </div>
-
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          Once changed, you’ll be redirected to your dashboard.
-        </p>
       </Card>
     </div>
   );
