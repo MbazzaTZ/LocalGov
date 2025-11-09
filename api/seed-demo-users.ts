@@ -1,3 +1,4 @@
+// api/seed-demo-users.ts
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -6,7 +7,7 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
-  if (req.method !== "POST" && req.method !== "GET") {
+  if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
@@ -14,36 +15,34 @@ export default async function handler(req, res) {
     { email: "admin@localgov.co.tz", password: "LocalGov@123", role: "Admin" },
     { email: "district@localgov.co.tz", password: "LocalGov@123", role: "District" },
     { email: "ward@localgov.co.tz", password: "LocalGov@123", role: "Ward" },
-    { email: "staff@localgov.co.tz", password: "LocalGov@123", role: "Staff" },
+    { email: "staff@localgov.co.tz", password: "LocalGov@123", role: "Staff" }
   ];
 
   try {
     for (const acc of demoAccounts) {
+      console.log(`🆕 Seeding ${acc.email}`);
+
       const { data: existing } = await supabase
         .from("profiles")
         .select("email")
         .eq("email", acc.email)
         .single();
 
-      if (existing) {
-        console.log(`✅ ${acc.email} already exists`);
+      if (existing) continue;
+
+      const { data: newUser, error: createError } =
+        await supabase.auth.admin.createUser({
+          email: acc.email,
+          password: acc.password,
+          email_confirm: true
+        });
+
+      if (createError) {
+        console.error("❌ Error creating user:", createError.message);
         continue;
       }
 
-      console.log(`🆕 Creating demo account: ${acc.email}`);
-
-      const { data: userData, error: signupError } = await supabase.auth.admin.createUser({
-        email: acc.email,
-        password: acc.password,
-        email_confirm: true,
-      });
-
-      if (signupError) {
-        console.error(`❌ Error creating ${acc.email}:`, signupError.message);
-        continue;
-      }
-
-      const userId = userData?.user?.id;
+      const userId = newUser?.user?.id;
       if (!userId) continue;
 
       await supabase.from("profiles").upsert({
@@ -54,13 +53,13 @@ export default async function handler(req, res) {
         district: acc.role === "District" ? "Demo District" : "",
         ward: acc.role === "Ward" ? "Demo Ward" : "",
         must_change_password: true,
-        created_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
       });
     }
 
     return res.status(200).json({ message: "✅ Demo users created successfully" });
   } catch (err) {
-    console.error("❌ Seeder error:", err);
+    console.error("❌ Seeder failed:", err);
     return res.status(500).json({ error: err.message });
   }
 }
