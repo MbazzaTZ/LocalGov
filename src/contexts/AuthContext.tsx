@@ -1,135 +1,111 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { supabase, supabaseAdmin, ensureDemoAccounts } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 
 type ProfileType = {
   id?: string;
+  fullName?: string;
   email?: string;
-  full_name?: string;
   role?: string;
   district?: string;
   ward?: string;
-  phone?: string;
-  nida?: string;
-  address?: string;
-  photo_url?: string;
   is_verified?: boolean;
   must_change_password?: boolean;
 };
 
-export type AuthContextType = {
+type AuthContextType = {
   user: any;
-  loading: boolean;
   profile: ProfileType | null;
   role: string | null;
+  loading: boolean;
   isVerified: boolean;
-  refreshProfile: () => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  loading: true,
   profile: null,
   role: null,
+  loading: true,
   isVerified: false,
-  refreshProfile: async () => {},
   signUp: async () => {},
   signIn: async () => {},
   signOut: async () => {},
+  refreshProfile: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<ProfileType | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  /* -------------------------------------------------------------------------- */
-  /* 🔹 INITIALIZATION + DEMO ACCOUNTS (only in dev) */
-  /* -------------------------------------------------------------------------- */
+  // 🧠 Refresh profile from Supabase
+  const refreshProfile = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (error) {
+      console.error("❌ Failed to load profile:", error.message);
+      return;
+    }
+
+    setProfile(data);
+    setRole(data.role || null);
+    setIsVerified(data.is_verified || false);
+
+    // 🔁 Force change password if flagged
+    if (data.must_change_password && window.location.pathname !== "/change-password") {
+      window.location.href = "/change-password";
+    }
+  };
+
+  // 🔐 On mount → load session
   useEffect(() => {
-    const init = async () => {
-      try {
-        if (import.meta.env.DEV) {
-          await ensureDemoAccounts(); // auto-seed demo roles locally
-        }
-
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        setUser(session?.user || null);
-      } catch (err: any) {
-        console.error("⚠️ Auth init error:", err.message);
-      } finally {
-        setLoading(false);
+    const initSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        setUser(data.session.user);
+        await refreshProfile();
       }
+      setLoading(false);
     };
 
-    init();
+    initSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
+      if (session?.user) refreshProfile();
     });
 
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  /* -------------------------------------------------------------------------- */
-  /* 🔹 FETCH / REFRESH PROFILE */
-  /* -------------------------------------------------------------------------- */
-  const refreshProfile = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        setProfile(data);
-        setRole(data.role || "Citizen");
-        setIsVerified(data.is_verified || false);
-
-        // Force password change if required
-        if (data.must_change_password && window.location.pathname !== "/change-password") {
-          window.location.href = "/change-password";
-        }
-      }
-    } catch (err: any) {
-      console.warn("⚠️ Profile load error:", err.message);
-    }
-  };
-
-  useEffect(() => {
-    if (user) refreshProfile();
-  }, [user]);
-
-  /* -------------------------------------------------------------------------- */
-  /* 🔹 SIGN UP (Citizen Users) */
-  /* -------------------------------------------------------------------------- */
+  // 🧩 Citizen Sign Up with Auto-Profile
   const signUp = async (email: string, password: string) => {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
 
-      if (error) throw error;
+    if (error) {
+      toast.error("Sign up failed", { description: error.message });
+      return;
+    }
 
-      const userId = data?.user?.id;
-      if (!userId) return;
-
-      // Create a profile record
-      const { error: profileError } = await supabase.from("profiles").upsert({
-        id: userId,
+    // Auto-create profile
+    if (data.user) {
+      await supabase.from("profiles").upsert({
+        id: data.user.id,
         email,
         full_name: email.split("@")[0],
         role: "Citizen",
@@ -138,95 +114,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         created_at: new Date().toISOString(),
       });
 
-      if (profileError) throw profileError;
+      toast.success("Welcome!", { description: "Your account has been created." });
 
-      toast.success("🎉 Registration successful! Welcome to LocalGov.");
-    } catch (err: any) {
-      console.error("❌ Signup error:", err.message);
-      toast.error("Signup failed", { description: err.message });
-      throw err;
+      // Auto login after sign up
+      await supabase.auth.signInWithPassword({ email, password });
+      window.location.href = "/dashboard";
     }
   };
 
-  /* -------------------------------------------------------------------------- */
-  /* 🔹 SIGN IN (All Users) */
-  /* -------------------------------------------------------------------------- */
+  // 🔑 Sign In (Admin, Staff, Citizen)
   const signIn = async (email: string, password: string) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-      if (error) throw error;
+    if (error) {
+      toast.error("Login failed", { description: error.message });
+      throw error;
+    }
 
-      const { data: profileData, error: profileErr } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("email", email)
-        .single();
+    await refreshProfile();
+    toast.success("Welcome back!");
 
-      if (profileErr) throw profileErr;
+    // Redirect by role
+    const { data } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("email", email)
+      .single();
 
-      setProfile(profileData);
-      setRole(profileData.role);
-      setIsVerified(profileData.is_verified || false);
-
-      // Redirect if required
-      if (profileData.must_change_password) {
-        window.location.href = "/change-password";
-      } else if (profileData.role === "Admin") {
+    const userRole = data?.role;
+    switch (userRole) {
+      case "Admin":
         window.location.href = "/admin-dashboard";
-      } else if (profileData.role === "District") {
+        break;
+      case "District":
         window.location.href = "/dashboard/district";
-      } else if (profileData.role === "Ward") {
+        break;
+      case "Ward":
         window.location.href = "/dashboard/ward";
-      } else if (profileData.role === "Staff") {
+        break;
+      case "Staff":
         window.location.href = "/dashboard/staff";
-      } else {
+        break;
+      default:
         window.location.href = "/dashboard";
-      }
-
-      toast.success(`👋 Welcome back, ${profileData.full_name || "User"}!`);
-    } catch (err: any) {
-      console.error("❌ Login error:", err.message);
-      toast.error("Login failed", { description: err.message });
-      throw err;
     }
   };
 
-  /* -------------------------------------------------------------------------- */
-  /* 🔹 SIGN OUT */
-  /* -------------------------------------------------------------------------- */
   const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      setUser(null);
-      setProfile(null);
-      setRole(null);
-      setIsVerified(false);
-      toast.info("You have been logged out.");
-    } catch (err: any) {
-      console.error("❌ Sign-out error:", err.message);
-    }
+    await supabase.auth.signOut();
+    setUser(null);
+    setProfile(null);
+    setRole(null);
+    setIsVerified(false);
+    toast.info("You have been signed out.");
   };
 
-  /* -------------------------------------------------------------------------- */
-  /* 🔹 PROVIDER VALUE */
-  /* -------------------------------------------------------------------------- */
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        profile,
-        role,
-        isVerified,
-        refreshProfile,
-        signUp,
-        signIn,
-        signOut,
-      }}
+      value={{ user, profile, role, loading, isVerified, signUp, signIn, signOut, refreshProfile }}
     >
       {children}
     </AuthContext.Provider>
