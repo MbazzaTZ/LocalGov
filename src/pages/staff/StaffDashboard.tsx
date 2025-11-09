@@ -1,73 +1,93 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useStaffAuth } from "@/contexts/staff-AuthContext";
+import { useStaffApplications } from "@/hooks/useStaffApplications";
+import { logAdminAction } from "@/utils/logAdminAction";
 import { toast } from "sonner";
 
 const StaffDashboard = () => {
-  const { profile, signOut, refreshProfile } = useStaffAuth();
-  const [stats, setStats] = useState({
-    totalApplications: 0,
-    pending: 0,
-    approved: 0,
-  });
+  const { profile } = useStaffAuth();
+  const { applications, loading, refetch } = useStaffApplications(profile?.district!, profile?.ward);
 
   useEffect(() => {
-    refreshProfile();
-
-    // Mock data for now — replace with real queries later
-    setStats({ totalApplications: 38, pending: 6, approved: 32 });
+    refetch();
   }, []);
 
+  const handleDecision = async (appId: string, decision: string, note?: string) => {
+    const { error } = await supabase
+      .from("applications")
+      .update({
+        decision,
+        decision_note: note || "",
+        handled_by: profile?.id,
+        handled_at: new Date(),
+        status: decision === "Approved" ? "Approved" : decision === "Rejected" ? "Rejected" : "Pending",
+      })
+      .eq("id", appId);
+
+    if (error) {
+      toast.error("Action failed", { description: error.message });
+    } else {
+      toast.success(`${decision} successfully recorded.`);
+      await logAdminAction(profile?.id!, "Staff", `${decision} Application`, `App ID: ${appId}`);
+      refetch();
+    }
+  };
+
+  if (loading) return <div className="p-10 text-center text-white">Loading applications...</div>;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-900 via-blue-700 to-cyan-600 text-white p-6 md:p-10">
-      <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl max-w-5xl mx-auto">
-        <h2 className="text-3xl font-semibold mb-2">
-          Welcome, {profile?.full_name || "Staff"} 👋
-        </h2>
-        <p className="text-white/80 mb-8">
-          Role: {profile?.role || "Staff"} | District: {profile?.district || "N/A"}
-        </p>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-blue-800 to-cyan-700 text-white p-8">
+      <h1 className="text-3xl font-bold mb-8 text-center">Staff Dashboard</h1>
 
-        {/* Dashboard Stats */}
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="bg-white/20 rounded-xl p-6 text-center shadow-lg">
-            <h3 className="text-4xl font-bold text-yellow-300">{stats.totalApplications}</h3>
-            <p className="text-sm uppercase mt-2 text-white/70">Total Applications</p>
-          </div>
-          <div className="bg-white/20 rounded-xl p-6 text-center shadow-lg">
-            <h3 className="text-4xl font-bold text-orange-300">{stats.pending}</h3>
-            <p className="text-sm uppercase mt-2 text-white/70">Pending</p>
-          </div>
-          <div className="bg-white/20 rounded-xl p-6 text-center shadow-lg">
-            <h3 className="text-4xl font-bold text-green-300">{stats.approved}</h3>
-            <p className="text-sm uppercase mt-2 text-white/70">Approved</p>
-          </div>
-        </div>
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-white/20 text-left">
+              <th className="p-3">Applicant</th>
+              <th className="p-3">Service Type</th>
+              <th className="p-3">Status</th>
+              <th className="p-3">Submitted</th>
+              <th className="p-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {applications.map((app) => (
+              <tr key={app.id} className="border-b border-white/10 hover:bg-white/10 transition">
+                <td className="p-3">{app.user_name || "Citizen"}</td>
+                <td className="p-3">{app.service_type}</td>
+                <td className="p-3">{app.status}</td>
+                <td className="p-3 text-sm text-white/70">
+                  {new Date(app.submitted_at).toLocaleDateString()}
+                </td>
+                <td className="p-3 text-right space-x-2">
+                  <button
+                    onClick={() => handleDecision(app.id, "Approved")}
+                    className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded-lg text-sm"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleDecision(app.id, "Rejected")}
+                    className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg text-sm"
+                  >
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => handleDecision(app.id, "Review", "Need more info")}
+                    className="bg-yellow-500 hover:bg-yellow-600 px-3 py-1 rounded-lg text-sm"
+                  >
+                    Request Info
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
-        {/* Quick Actions */}
-        <div className="mt-8 space-x-4 text-center">
-          <button
-            onClick={() => (window.location.href = "/applications")}
-            className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl font-semibold"
-          >
-            View Applications
-          </button>
-          <button
-            onClick={() => (window.location.href = "/reports")}
-            className="bg-yellow-500 hover:bg-yellow-600 px-6 py-3 rounded-xl font-semibold"
-          >
-            Generate Reports
-          </button>
-          <button
-            onClick={signOut}
-            className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-xl font-semibold"
-          >
-            Logout
-          </button>
-        </div>
+        {!applications.length && <p className="text-center text-white/60 mt-4">No applications available.</p>}
       </div>
     </div>
   );
 };
 
 export default StaffDashboard;
-
