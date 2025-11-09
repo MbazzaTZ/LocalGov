@@ -8,9 +8,17 @@
       "config": {
         "distDir": "dist"
       }
+    },
+    {
+      "src": "api/**/*.ts",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
     {
       "handle": "filesystem"
     },
@@ -23,8 +31,7 @@
   "env": {
     "VITE_SUPABASE_URL": "https://ubpopiltillvjncpzdqu.supabase.co",
     "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicG9waWx0aWxsdmpuY3B6ZHF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1OTU4MTQsImV4cCI6MjA3ODE3MTgxNH0.I4PwXBfQnustdhMPPH3X9ZaIZ7mSjEhqYPHr14IPgCk",
-    "VITE_SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicG9waWx0aWxsdmpuY3B6ZHF1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjU5NTgxNCwiZXhwIjoyMDc4MTcxODE0fQ.y6PA5tgOlvt0-LP2QFaIvPz6vXurREa5XKY_ShlE9OQ"
-  },
+    
   "outputDirectory": "dist",
   "cleanUrls": true,
   "trailingSlash": false
