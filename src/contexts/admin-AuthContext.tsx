@@ -29,24 +29,20 @@ const AdminAuthContext = createContext<AdminAuthContextType>({
   refreshProfile: async () => {},
 });
 
-export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<AdminProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Load Supabase session
+  // ✅ Load current Supabase session
   useEffect(() => {
-    const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user || null);
+    const loadSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setUser(data?.session?.user || null);
       setLoading(false);
     };
 
-    getSession();
+    loadSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
@@ -55,24 +51,23 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // ✅ Fetch admin profile
+  // ✅ Fetch Admin Profile
   const refreshProfile = async () => {
     if (!user) return;
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", user.id)
-      .eq("role", "Admin")
       .single();
 
     if (error) {
-      console.error("❌ Admin profile fetch failed:", error.message);
+      console.error("❌ Failed to fetch profile:", error.message);
       toast.error("Failed to load profile");
       return;
     }
 
     if (!data?.is_admin) {
-      toast.error("Unauthorized Access", { description: "Not an admin user" });
+      toast.error("Access Denied", { description: "You are not an admin user." });
       await supabase.auth.signOut();
       window.location.href = "/admin-login";
       return;
@@ -87,13 +82,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // ✅ Login
   const signIn = async (email: string, password: string) => {
-    const { error, data } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      console.error("❌ Admin login error:", error.message);
       toast.error("Login failed", { description: error.message });
       throw error;
     }
@@ -105,13 +95,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({
       .single();
 
     if (!profileData?.is_admin) {
-      toast.error("Access Denied", { description: "Not an admin account" });
+      toast.error("Unauthorized", { description: "This account is not admin-enabled." });
       await supabase.auth.signOut();
       return;
     }
 
     setProfile(profileData);
-    toast.success("✅ Login successful! Redirecting to admin dashboard...");
+    toast.success("✅ Welcome Admin!", { description: "Redirecting to dashboard..." });
     window.location.href = "/admin-dashboard";
   };
 
@@ -120,14 +110,12 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
-    toast.info("You have been logged out");
+    toast.info("You’ve been logged out");
     window.location.href = "/admin-login";
   };
 
   return (
-    <AdminAuthContext.Provider
-      value={{ user, profile, loading, signIn, signOut, refreshProfile }}
-    >
+    <AdminAuthContext.Provider value={{ user, profile, loading, signIn, signOut, refreshProfile }}>
       {children}
     </AdminAuthContext.Provider>
   );
