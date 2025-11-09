@@ -9,8 +9,11 @@ const StaffDashboard = () => {
   const { applications, loading, refetch } = useStaffApplications(profile?.district!, profile?.ward);
 
   useEffect(() => {
-    refetch();
-  }, []);
+  if (navigator.onLine) {
+    syncOfflineReports(profile?.id!);
+  }
+}, [navigator.onLine]);
+
 
   const handleDecision = async (appId: string, decision: string, note?: string) => {
     const { error } = await supabase
