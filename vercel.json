@@ -1,0 +1,30 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "builds": [
+    {
+      "src": "vite.config.ts",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "framework": "vite",
+  "env": {
+    "VITE_SUPABASE_URL": "https://ubpopiltillvjncpzdqu.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicG9waWx0aWxsdmpuY3B6ZHF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1OTU4MTQsImV4cCI6MjA3ODE3MTgxNH0.I4PwXBfQnustdhMPPH3X9ZaIZ7mSjEhqYPHr14IPgCk"
+  },
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "trailingSlash": false
+}
