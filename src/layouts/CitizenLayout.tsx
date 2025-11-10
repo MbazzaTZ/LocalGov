@@ -1,6 +1,13 @@
 import React, { useState } from "react";
-import { Home, FileText, CreditCard, Settings, LogOut, Menu } from "lucide-react";
+import {
+  Home,
+  FileText,
+  CreditCard,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import Topbar from "@/components/Topbar";
+import BottomNav from "@/components/BottomNav";
 import { useCitizenAuth } from "@/contexts/citizen-AuthContext";
 
 const CitizenLayout = ({ children }: { children: React.ReactNode }) => {
@@ -17,7 +24,9 @@ const CitizenLayout = ({ children }: { children: React.ReactNode }) => {
       >
         <div className="p-6 border-b border-blue-700 flex items-center justify-between">
           <h1 className="text-xl font-semibold text-white">Citizen Portal</h1>
-          <button className="md:hidden text-white/70" onClick={() => setOpen(false)}>✕</button>
+          <button className="md:hidden text-white/70" onClick={() => setOpen(false)}>
+            ✕
+          </button>
         </div>
 
         <nav className="flex flex-col space-y-2 p-4">
@@ -46,7 +55,8 @@ const CitizenLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         <Topbar title="Citizen Dashboard" theme="blue" onMenuClick={() => setOpen(!open)} />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6 pb-24 md:pb-6">{children}</main>
+        <BottomNav />
       </div>
     </div>
   );
