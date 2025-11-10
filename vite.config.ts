@@ -2,42 +2,29 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
-// ✅ Vite Configuration for LocalGov Portal
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "src"),
-    },
+    alias: { "@": path.resolve(__dirname, "src") }
   },
   build: {
     outDir: "dist",
     sourcemap: true,
-    rollupOptions: {
-      output: {
-        manualChunks: undefined,
-      },
-    },
+    rollupOptions: { output: { manualChunks: undefined } }
   },
   server: {
     port: 5173,
     open: true,
     host: true,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-    },
-    // 🚀 Important: Prevents 404 on React Router paths like /dashboard, /admin, /staff
-    historyApiFallback: true,
+    headers: { "Access-Control-Allow-Origin": "*" },
+    historyApiFallback: true      // 👈 prevents 404s on /dashboard, /admin, etc.
   },
   preview: {
     port: 8080,
     host: true,
-    // 👇 Also apply fallback behavior for preview server
-    historyApiFallback: true,
+    historyApiFallback: true      // 👈 same for `vite preview`
   },
-  define: {
-    "process.env": process.env,
-  },
+  define: { "process.env": process.env },
   optimizeDeps: {
     include: [
       "react",
@@ -46,7 +33,7 @@ export default defineConfig({
       "@supabase/supabase-js",
       "date-fns",
       "lucide-react",
-      "sonner",
-    ],
-  },
+      "sonner"
+    ]
+  }
 });
