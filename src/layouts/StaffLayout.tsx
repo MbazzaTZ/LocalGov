@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Menu, LogOut, LayoutDashboard, Users, FileText, Map, Settings } from "lucide-react";
 import { useStaffAuth } from "@/contexts/staff-AuthContext";
+import Topbar from "@/components/Topbar";
 
 const StaffLayout = ({ children }: { children: React.ReactNode }) => {
   const { signOut, profile } = useStaffAuth();
