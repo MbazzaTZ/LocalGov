@@ -1,166 +1,53 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  LayoutDashboard,
-  FileText,
-  Wallet,
-  User,
-  LogOut,
-  Settings,
-  Bell,
-  Menu,
-  X,
-} from "lucide-react";
+import { Home, FileText, CreditCard, Settings, LogOut, Menu } from "lucide-react";
+import Topbar from "@/components/Topbar";
 import { useCitizenAuth } from "@/contexts/citizen-AuthContext";
-import { toast } from "sonner";
 
-/**
- * 🌍 CitizenLayout (Responsive)
- * - Sidebar for desktop
- * - Collapsible drawer for mobile
- * - Keeps your original glass UI & gradient theme
- */
 const CitizenLayout = ({ children }: { children: React.ReactNode }) => {
-  const navigate = useNavigate();
-  const { profile, signOut } = useCitizenAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const menuItems = [
-    { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-    { name: "Services", icon: FileText, path: "/services" },
-    { name: "My Applications", icon: Settings, path: "/applications" },
-    { name: "Payments", icon: Wallet, path: "/payments" },
-    { name: "Profile", icon: User, path: "/profile" },
-  ];
-
-  const handleLogout = async () => {
-    await signOut();
-    toast.info("You’ve been logged out.");
-    navigate("/auth");
-  };
+  const { signOut } = useCitizenAuth();
+  const [open, setOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-blue-900 via-blue-700 to-blue-500 text-white">
-      {/* ---------------------------- Sidebar (Desktop) ---------------------------- */}
-      <aside className="hidden md:flex flex-col w-64 bg-white/10 backdrop-blur-xl border-r border-white/20 p-5 space-y-6">
-        <div
-          onClick={() => navigate("/dashboard")}
-          className="flex items-center gap-3 cursor-pointer mb-8"
-        >
-          <img
-            src="https://images.seeklogo.com/logo-png/31/1/coat-of-arms-of-tanzania-logo-png_seeklogo-311608.png"
-            alt="Tanzania"
-            className="w-8 h-8"
-          />
-          <h1 className="text-xl font-semibold text-yellow-300">SmartGov TZ</h1>
+    <div className="flex h-screen bg-gradient-to-br from-blue-900 via-blue-700 to-blue-500 text-white">
+      {/* Sidebar */}
+      <aside
+        className={`fixed md:relative z-40 w-64 bg-blue-900/70 backdrop-blur-lg border-r border-blue-700 transition-transform duration-300 ${
+          open ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
+        <div className="p-6 border-b border-blue-700 flex items-center justify-between">
+          <h1 className="text-xl font-semibold text-white">Citizen Portal</h1>
+          <button className="md:hidden text-white/70" onClick={() => setOpen(false)}>✕</button>
         </div>
 
-        <nav className="space-y-2">
-          {menuItems.map((item) => (
-            <button
-              key={item.name}
-              onClick={() => navigate(item.path)}
-              className={`flex items-center w-full gap-3 px-4 py-3 rounded-xl transition-all hover:bg-white/20 ${
-                window.location.pathname === item.path ? "bg-white/20" : ""
-              }`}
-            >
-              <item.icon className="w-5 h-5 text-yellow-300" />
-              <span>{item.name}</span>
-            </button>
-          ))}
-        </nav>
+        <nav className="flex flex-col space-y-2 p-4">
+          <a href="/citizen/dashboard" className="flex items-center gap-2 p-2 hover:bg-blue-800 rounded-lg">
+            <Home className="w-4 h-4" /> Dashboard
+          </a>
+          <a href="/services" className="flex items-center gap-2 p-2 hover:bg-blue-800 rounded-lg">
+            <FileText className="w-4 h-4" /> Services
+          </a>
+          <a href="/applications" className="flex items-center gap-2 p-2 hover:bg-blue-800 rounded-lg">
+            <CreditCard className="w-4 h-4" /> Applications
+          </a>
+          <a href="/citizen/settings" className="flex items-center gap-2 p-2 hover:bg-blue-800 rounded-lg">
+            <Settings className="w-4 h-4" /> Settings
+          </a>
 
-        <div className="mt-auto pt-4 border-t border-white/20">
           <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-600/60 transition-all"
+            onClick={signOut}
+            className="mt-4 flex items-center gap-2 text-red-400 hover:text-red-500"
           >
-            <LogOut className="w-5 h-5" />
-            <span>Logout</span>
+            <LogOut className="w-4 h-4" /> Logout
           </button>
-        </div>
+        </nav>
       </aside>
 
-      {/* ----------------------------- Mobile Header ------------------------------ */}
-      <header className="flex md:hidden items-center justify-between bg-white/10 backdrop-blur-xl border-b border-white/20 p-4 sticky top-0 z-50">
-        <div className="flex items-center gap-2">
-          <img
-            src="https://images.seeklogo.com/logo-png/31/1/coat-of-arms-of-tanzania-logo-png_seeklogo-311608.png"
-            alt="TZ"
-            className="w-7 h-7"
-          />
-          <h1 className="text-lg font-semibold text-yellow-300">SmartGov TZ</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => toast.info("Notifications coming soon!")}
-            className="relative p-2 hover:bg-white/10 rounded-full transition"
-          >
-            <Bell className="w-5 h-5 text-yellow-300" />
-          </button>
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="p-2 hover:bg-white/10 rounded-full transition"
-          >
-            {menuOpen ? (
-              <X className="w-6 h-6 text-white" />
-            ) : (
-              <Menu className="w-6 h-6 text-white" />
-            )}
-          </button>
-        </div>
-      </header>
-
-      {/* ----------------------------- Mobile Drawer ------------------------------ */}
-      {menuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex">
-          <div className="w-64 bg-white/10 backdrop-blur-2xl h-full p-6 flex flex-col justify-between">
-            <nav className="space-y-3">
-              {menuItems.map((item) => (
-                <button
-                  key={item.name}
-                  onClick={() => {
-                    navigate(item.path);
-                    setMenuOpen(false);
-                  }}
-                  className={`flex items-center w-full gap-3 px-3 py-2 rounded-xl text-white/90 hover:bg-white/20 ${
-                    window.location.pathname === item.path ? "bg-white/20" : ""
-                  }`}
-                >
-                  <item.icon className="w-5 h-5 text-yellow-300" />
-                  <span>{item.name}</span>
-                </button>
-              ))}
-            </nav>
-
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-3 px-3 py-2 mt-6 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition-all"
-            >
-              <LogOut className="w-5 h-5" />
-              Logout
-            </button>
-          </div>
-          <div
-            className="flex-1"
-            onClick={() => setMenuOpen(false)}
-            aria-label="Close menu"
-          />
-        </div>
-      )}
-
-      {/* ------------------------------ Main Content ------------------------------ */}
-      <main className="flex-1 p-4 md:p-10">
-        <div className="hidden md:flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-xl font-semibold">
-              Hi, {profile?.full_name || "Citizen"} 👋
-            </h2>
-            <p className="text-white/70 text-sm">{profile?.email}</p>
-          </div>
-        </div>
-        {children}
-      </main>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        <Topbar title="Citizen Dashboard" theme="blue" onMenuClick={() => setOpen(!open)} />
+        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      </div>
     </div>
   );
 };
