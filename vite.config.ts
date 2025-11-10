@@ -26,10 +26,14 @@ export default defineConfig({
     headers: {
       "Access-Control-Allow-Origin": "*",
     },
+    // 🚀 Important: Prevents 404 on React Router paths like /dashboard, /admin, /staff
+    historyApiFallback: true,
   },
   preview: {
     port: 8080,
     host: true,
+    // 👇 Also apply fallback behavior for preview server
+    historyApiFallback: true,
   },
   define: {
     "process.env": process.env,
