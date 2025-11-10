@@ -40,14 +40,14 @@ const CitizenApp = () => {
               <Route path="/citizen-register" element={<CitizenRegister />} />
 
               {/* 🔐 Protected Routes */}
-              <Route
-                path="/dashboard"
-                element={
-                  <CitizenProtectedRoute>
-                    <CitizenDashboard />
-                  </CitizenProtectedRoute>
-                }
-              />
+<Route
+  path="/dashboard"
+  element={
+    <CitizenProtectedRoute>
+      <CitizenDashboard />
+    </CitizenProtectedRoute>
+  }
+/>
               <Route
                 path="/verify"
                 element={
@@ -56,14 +56,14 @@ const CitizenApp = () => {
                   </CitizenProtectedRoute>
                 }
               />
-              <Route
-                path="/services"
-                element={
-                  <CitizenProtectedRoute>
-                    <Services />
-                  </CitizenProtectedRoute>
-                }
-              />
+<Route
+  path="/services"
+  element={
+    <CitizenProtectedRoute requireVerified>
+      <Services />
+    </CitizenProtectedRoute>
+  }
+/>
               <Route
                 path="/applications"
                 element={
