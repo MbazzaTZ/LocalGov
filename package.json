@@ -1,15 +1,14 @@
 {
   "name": "tanzania-localgov",
-  "private": true,
   "version": "1.0.0",
+  "private": true,
   "type": "module",
   "description": "Tanzania Local Government Digital Gateway — React + Vite + Supabase + Shadcn UI",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint .",
-    "start": "node server.js"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --fix"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -89,5 +88,19 @@
   },
   "engines": {
     "node": ">=18.x"
+  },
+  "keywords": [
+    "vite",
+    "react",
+    "supabase",
+    "tanzania",
+    "local-government",
+    "e-government",
+    "shadcn-ui"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MbazzaTZ/LocalGov"
   }
 }
